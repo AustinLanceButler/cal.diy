@@ -1,0 +1,70 @@
+name: build-cal-diy-image
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [fta]
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: ghcr-build
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      builddb:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: cal
+          POSTGRES_PASSWORD: cal
+          POSTGRES_DB: cal
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U cal"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+
+      # cal.com images are huge; hosted runners can run out of disk mid-build.
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc /opt/hostedtoolcache/CodeQL || true
+          df -h /
+
+      - name: Log in to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      # --network=host lets the Next.js build's page-data collection reach the
+      # Postgres service published on the runner host (the documented
+      # DOCKER_BUILDKIT=0 path breaks on this Dockerfile's
+      # `FROM --platform=$BUILDPLATFORM`, which is BuildKit-only).
+      - name: Build image
+        run: |
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          echo "SHORT_SHA=$SHORT_SHA" >> "$GITHUB_ENV"
+          docker build \
+            --network=host \
+            --build-arg DATABASE_URL="postgresql://cal:cal@localhost:5432/cal" \
+            --build-arg NEXT_PUBLIC_WEBAPP_URL="https://cal.tail2dd94c.ts.net" \
+            --build-arg CALCOM_TELEMETRY_DISABLED=1 \
+            --build-arg MAX_OLD_SPACE_SIZE=6144 \
+            -t "ghcr.io/austinlancebutler/cal-diy:${SHORT_SHA}" \
+            -t "ghcr.io/austinlancebutler/cal-diy:latest" \
+            .
+
+      - name: Push
+        run: |
+          docker push "ghcr.io/austinlancebutler/cal-diy:${SHORT_SHA}"
+          docker push "ghcr.io/austinlancebutler/cal-diy:latest"
+
+      - name: Report
+        run: |
+          echo "Pushed ghcr.io/austinlancebutler/cal-diy:${SHORT_SHA} (and :latest)" >> "$GITHUB_STEP_SUMMARY"
