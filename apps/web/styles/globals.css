@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..600;1,9..144,400..500&family=Inter+Tight:wght@400..700&display=swap");
 @import "tailwindcss";
 @import "../../../packages/config/theme/shared-sources.css";
 @import "../../../packages/config/theme/tokens.css";
@@ -421,4 +422,12 @@ html.todesktop.dark {
 html[dir="rtl"] .react-tel-input .flag-dropdown {
   left: auto !important;
   right: 0 !important;
+}
+
+/* ── Fat Tail Ads brand fonts ─────────────────────────────────────────
+   Override Cal's generated font vars: --font-cal (display/headings) and
+   --font-sans (UI/body). Vars cascade to every component via var(). */
+:root {
+  --font-cal: "Fraunces", Georgia, "Times New Roman", serif !important;
+  --font-sans: "Inter Tight", -apple-system, system-ui, "Helvetica Neue", sans-serif !important;
 }
