@@ -53,7 +53,7 @@ jobs:
           docker build \
             --network=host \
             --build-arg DATABASE_URL="postgresql://cal:cal@localhost:5432/cal" \
-            --build-arg NEXT_PUBLIC_WEBAPP_URL="https://cal.tail2dd94c.ts.net" \
+            --build-arg NEXT_PUBLIC_WEBAPP_URL="https://book.fattailads.com" \
             --build-arg CALCOM_TELEMETRY_DISABLED=1 \
             --build-arg MAX_OLD_SPACE_SIZE=6144 \
             -t "ghcr.io/austinlancebutler/cal-diy:${SHORT_SHA}" \
