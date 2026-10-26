@@ -69,7 +69,9 @@ export async function detectContentType(buffer: Buffer): Promise<string | null> 
   // Fallback to sharp metadata detection
   try {
     const meta = await sharp(buffer).metadata();
-    switch (meta?.format) {
+    // sharp 0.35 dropped "avif"/"jpg" from keyof FormatEnum (AVIF reports as "heif"); keep the
+    // string cases but compare as a plain string so the switch still compiles.
+    switch (meta?.format as string | undefined) {
       case "avif":
         return AVIF;
       case "webp":
